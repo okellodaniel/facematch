@@ -7,6 +7,10 @@ name = "pypi"
 insightface = "*"
 opencv-python = "*"
 numpy = "*"
+scalar-fastapi = "*"
+onnxruntime = "*"
+python-multipart = "*"
+filetype = "*"
 
 [dev-packages]
 
