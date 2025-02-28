@@ -1,7 +1,5 @@
 import logging
-import filetype
-import PIL.Image as Image
-from io import BytesIO
+from helpers.file_helpers import FileHandler
 from typing import Annotated,IO
 from facematch import FaceMatch
 from fastapi.responses import JSONResponse
@@ -26,9 +24,16 @@ async def face_match(
         if img1 is None or img2 is None:
             raise HTTPException(status_code=400, detail="img1 and img2 are required")
 
+        filehandler = FileHandler()
+        bytestoimage = filehandler.convert_bytes_to_image
+        validate_file_size_type = filehandler.validate_file_size_type
+
         # convert bytes to Image for validation
         image_1 = bytestoimage(img1)
         image_2 = bytestoimage(img2)
+
+        validate_file_size_type(image_1)
+        validate_file_size_type(image_2)
 
         facematch = FaceMatch(img1, img2)
         response = facematch.match(img1, img2)
@@ -44,20 +49,3 @@ async def face_match(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f'Error: {str(e)}'
         )
-
-def bytestoimage(image_bytes):
-    image = Image.open(BytesIO(image_bytes))
-    logging.info(f'converted bytes to image: {image.filename}')
-    return image
-
-def validate_file_size_type(file: IO):
-    FILE_SIZE=2097152 #2mb
-    accepted_types = ["image/png", "image/jpeg", "image/jpg", "png","jpeg", "jpg"]
-
-    file_info = filetype.guess(file)
-    if file_info is None:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Unable to determine the file type"
-        )
-    detected_content_type = file_info.extension.lower()
